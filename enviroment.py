@@ -38,6 +38,7 @@ class OhlcvEnv(gym.Env):
         # defines action space
         self.action_space = spaces.Discrete(len(self.actions))
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.shape, dtype=np.float32)
+        self.trade_history = []
 
     # data is taken from https://www.cryptodatadownload.com/data/northamerican/
     def load_from_csv(self):
@@ -50,6 +51,8 @@ class OhlcvEnv(gym.Env):
 
         raw_df= pd.read_csv(self.path + self.rand_episode, 
             parse_dates=['date'], date_parser=dateparse)
+
+        raw_df = raw_df.sort_values(by='date').reset_index(drop=True)
         extractor = process_data.FeatureExtractor(raw_df)
         self.df = extractor.add_bar_features() # bar features o, h, l, c ---> C(4,2) = 4*3/2*1 = 6 features
 
@@ -92,27 +95,37 @@ class OhlcvEnv(gym.Env):
                 self.position = LONG # update position to long
                 self.action = BUY # record action as buy
                 self.entry_price = self.closingPrice # maintain entry price
+                self.trade_history.append(['long open',self.closingPrice])
             elif self.position == SHORT: # if previous position was short
                 self.position = FLAT  # update position to flat
                 self.action = BUY # record action as buy
                 self.exit_price = self.closingPrice
                 self.reward += ((self.entry_price - self.exit_price)/self.exit_price + 1)*(1-self.fee)**2 - 1 # calculate reward
                 self.krw_balance = self.krw_balance * (1.0 + self.reward) # evaluate cumulative return in krw-won
-                self.entry_price = 0 # clear entry price
                 self.n_short += 1 # record number of short
+                self.trade_history.append(['short close ', self.closingPrice, self.entry_price,
+                    ((self.entry_price - self.exit_price)/self.exit_price + 1)*(1-self.fee)**2 - 1,
+                    self.krw_balance 
+                    ])
+                self.entry_price = 0 # clear entry price
         elif action == 1: # vice versa for short trade
             if self.position == FLAT:
                 self.position = SHORT
                 self.action = 1
                 self.entry_price = self.closingPrice
+                self.trade_history.append(['short open',self.closingPrice])
             elif self.position == LONG:
                 self.position = FLAT
                 self.action = 1
                 self.exit_price = self.closingPrice
                 self.reward += ((self.exit_price - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1
                 self.krw_balance = self.krw_balance * (1.0 + self.reward)
-                self.entry_price = 0
                 self.n_long += 1
+                self.trade_history.append(['long close',self.closingPrice, self.entry_price,
+                    ((self.exit_price - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1,
+                    self.krw_balance 
+                    ])
+                self.entry_price = 0
 
         # [coin + krw_won] total value evaluated in krw won
         if(self.position == LONG):
@@ -168,6 +181,8 @@ class OhlcvEnv(gym.Env):
         self.position = FLAT
         self.done = False
 
+        self.trade_history = []
+
         self.updateState() # returns observed_features +  opened position(LONG/SHORT/FLAT) + profit_earned(during opened position)
         return self.state
 
@@ -182,3 +197,7 @@ class OhlcvEnv(gym.Env):
         # append two
         self.state = np.concatenate((self.df[self.current_tick], one_hot_position, [profit]))
         return self.state
+
+    def save_history(self):
+        df = pd.DataFrame(self.trade_history)
+        df.to_csv('trade_history.csv')

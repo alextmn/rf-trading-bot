@@ -56,20 +56,23 @@ def main():
 
     while True:
         # train
-        dqn.fit(env, nb_steps=5500, nb_max_episode_steps=10000, visualize=False, verbose=2)
+        dqn.load_weights('model/duel_dqn_weights-1.h5f')
+        #dqn.fit(env, nb_steps=5500, nb_max_episode_steps=10000, visualize=False, verbose=2)
         #try:
             # validate
         info = dqn.test(env_test, nb_episodes=1, visualize=False)
-        n_long, n_short, total_reward, portfolio = info['n_trades']['long'], info['n_trades']['short'], info[
-            'total_reward'], int(info['portfolio'])
-        np.array([info]).dump(
-            './info/duel_dqn_{0}_weights_{1}LS_{2}_{3}_{4}.info'.format(ENV_NAME, portfolio, n_long, n_short,
-                                                                    total_reward))
-        dqn.save_weights(
-            './model/duel_dqn_{0}_weights_{1}LS_{2}_{3}_{4}.h5f'.format(ENV_NAME, portfolio, n_long, n_short, total_reward),
-            overwrite=True)
+        env_test.save_history()
+        # n_long, n_short, total_reward, portfolio = info['n_trades']['long'], info['n_trades']['short'], info[
+        #     'total_reward'], int(info['portfolio'])
+        # np.array([info]).dump(
+        #     './info/duel_dqn_{0}_weights_{1}LS_{2}_{3}_{4}.info'.format(ENV_NAME, portfolio, n_long, n_short,
+        #                                                             total_reward))
+        # dqn.save_weights(
+        #     './model/duel_dqn_{0}_weights_{1}LS_{2}_{3}_{4}.h5f'.format(ENV_NAME, portfolio, n_long, n_short, total_reward),
+        #     overwrite=True)
         # except KeyboardInterrupt:
         #     continue
+        break
 
 if __name__ == '__main__':
     main()
