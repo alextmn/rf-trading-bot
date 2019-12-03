@@ -66,6 +66,7 @@ class OhlcvEnv(gym.Env):
             'bar_co', 'close']
         self.df.dropna(inplace=True) # drops Nan rows
         self.closingPrices = self.df['close'].values
+        self.dates = self.df['date'].values
         self.df = self.df[feature_list].values
 
     def render(self, mode='human', verbose=False):
@@ -95,7 +96,7 @@ class OhlcvEnv(gym.Env):
                 self.position = LONG # update position to long
                 self.action = BUY # record action as buy
                 self.entry_price = self.closingPrice # maintain entry price
-                self.trade_history.append(['long open',self.closingPrice])
+                self.trade_history.append(['long open', self.dates[self.current_tick], self.closingPrice])
             elif self.position == SHORT: # if previous position was short
                 self.position = FLAT  # update position to flat
                 self.action = BUY # record action as buy
@@ -103,7 +104,7 @@ class OhlcvEnv(gym.Env):
                 self.reward += ((self.entry_price - self.exit_price)/self.exit_price + 1)*(1-self.fee)**2 - 1 # calculate reward
                 self.krw_balance = self.krw_balance * (1.0 + self.reward) # evaluate cumulative return in krw-won
                 self.n_short += 1 # record number of short
-                self.trade_history.append(['short close ', self.closingPrice, self.entry_price,
+                self.trade_history.append(['short close ', self.dates[self.current_tick], self.closingPrice, self.entry_price,
                     ((self.entry_price - self.exit_price)/self.exit_price + 1)*(1-self.fee)**2 - 1,
                     self.krw_balance 
                     ])
@@ -113,7 +114,7 @@ class OhlcvEnv(gym.Env):
                 self.position = SHORT
                 self.action = 1
                 self.entry_price = self.closingPrice
-                self.trade_history.append(['short open',self.closingPrice])
+                self.trade_history.append(['short open', self.dates[self.current_tick], self.closingPrice])
             elif self.position == LONG:
                 self.position = FLAT
                 self.action = 1
@@ -121,7 +122,7 @@ class OhlcvEnv(gym.Env):
                 self.reward += ((self.exit_price - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1
                 self.krw_balance = self.krw_balance * (1.0 + self.reward)
                 self.n_long += 1
-                self.trade_history.append(['long close',self.closingPrice, self.entry_price,
+                self.trade_history.append(['long close', self.dates[self.current_tick], self.closingPrice, self.entry_price,
                     ((self.exit_price - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1,
                     self.krw_balance 
                     ])
