@@ -7,7 +7,7 @@ from keras.optimizers import Adam
 
 # keras-rl agent
 from rl.agents.dqn import DQNAgent
-from rl.policy import BoltzmannQPolicy, EpsGreedyQPolicy
+from rl.policy import BoltzmannQPolicy, EpsGreedyQPolicy, LinearAnnealedPolicy
 from rl.memory import SequentialMemory
 
 # trader environment
@@ -46,7 +46,9 @@ def main():
     # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and even the metrics!
     memory = SequentialMemory(limit=50000, window_length=TIME_STEP)
     # policy = BoltzmannQPolicy()
-    policy = EpsGreedyQPolicy()
+    policy = LinearAnnealedPolicy(EpsGreedyQPolicy(),
+             attr='eps', value_max=1., value_min=.2, value_test=.05, nb_steps=3000)
+    #policy = EpsGreedyQPolicy()
     # enable the dueling network
     # you can specify the dueling_type to one of {'avg','max','naive'}
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=200,
@@ -56,12 +58,12 @@ def main():
 
     while True:
         # train
-        dqn.load_weights('model/duel_dqn_weights-1.h5f')
-        #dqn.fit(env, nb_steps=5500, nb_max_episode_steps=10000, visualize=False, verbose=2)
+        #dqn.load_weights('model/duel_dqn_weights-1.h5f')
+        dqn.fit(env, nb_steps=500, nb_max_episode_steps=10000, visualize=False, verbose=2)
         #try:
             # validate
-        info = dqn.test(env_test, nb_episodes=1, visualize=False)
-        env_test.save_history()
+        #info = dqn.test(env_test, nb_episodes=1, visualize=False)
+        env.save_history()
         # n_long, n_short, total_reward, portfolio = info['n_trades']['long'], info['n_trades']['short'], info[
         #     'total_reward'], int(info['portfolio'])
         # np.array([info]).dump(
