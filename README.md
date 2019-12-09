@@ -13,7 +13,8 @@ self.df['bar_co'] = self.close - self.open
 self.df['bar_mov'] = self.df['close'] - self.df['close'].shift(1
 ```
 
-# Trading Posistions
+# Trading Positions
+There are three: Long, Short and Hold.
 ```python
 LONG = 0
 SHORT = 1
