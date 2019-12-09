@@ -46,10 +46,10 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 # Results
 The BTC price is split into traing and testing set. At the left the results of trading across 
 multiple agents. At the right is the testing on the prices the agents have not seen. The legent shows how many trades were done by the aganet
-![Training and Testing](/images/trading_agents.png)
+![Training and Testing](/images/best_trading_agents.png)
 
 # Most profitable 
-
+![Training and Testing](/images/trading_agents.png)
 # Credits
 Based on the work: https://github.com/miroblog/deep_rl_trader/
 
