@@ -1,5 +1,5 @@
 # rf-trading-bot
-Deep reinforcement learning crypto trading bot
+Deep reinforcement learning crypto trading bot using Keras RL (reinforcement learning)
 
 # Input Features
 Stock Bar Attributes
