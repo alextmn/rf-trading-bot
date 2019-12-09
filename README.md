@@ -1,7 +1,8 @@
 # rf-trading-bot
 Deep reinforcement learning crypto trading bot
 
-# Stock Bar Attributes
+# Input Features
+Stock Bar Attributes
 ```python
 self.df['bar_hc'] = self.high - self.close
 self.df['bar_ho'] = self.high - self.open
@@ -44,7 +45,8 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 # Results
 The BTC price is split into traing and testing set. At the left the results of trading across 
-multiple agents. At the right is the testing on the prices the agents have not seen
+multiple agents. At the right is the testing on the prices the agents have not seen. The legent shows how many trades were done by the aganet
+
 
 # Most profitable 
 
