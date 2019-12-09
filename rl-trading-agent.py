@@ -58,12 +58,12 @@ def main():
 
     while True:
         # train
-        #dqn.load_weights('model/duel_dqn_weights-1.h5f')
-        dqn.fit(env, nb_steps=500, nb_max_episode_steps=10000, visualize=False, verbose=2)
+        dqn.load_weights('model/duel_dqn_weights-a-2.h5f')
+        #dqn.fit(env, nb_steps=500, nb_max_episode_steps=10000, visualize=False, verbose=2)
         #try:
             # validate
-        #info = dqn.test(env_test, nb_episodes=1, visualize=False)
-        env.save_history()
+        info = dqn.test(env_test, nb_episodes=1, visualize=False)
+        #env.save_history()
         # n_long, n_short, total_reward, portfolio = info['n_trades']['long'], info['n_trades']['short'], info[
         #     'total_reward'], int(info['portfolio'])
         # np.array([info]).dump(

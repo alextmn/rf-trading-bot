@@ -103,7 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-.model
+model
 
 *h5f
 trade_history.csv
