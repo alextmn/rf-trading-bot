@@ -44,8 +44,8 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 ```
 
-# Results
-The BTC price is split into traing and testing set. At the left the results of trading across 
+# Return charts
+The BTC price is split into traing and testing set. At the left the resturns of trading across 
 multiple agents. At the right there is the testing on the prices the agents have not seen. The legend shows how many trades were done by each agent.
 
 At the top you see actual BTC prices.
