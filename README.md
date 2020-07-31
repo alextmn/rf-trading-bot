@@ -49,7 +49,7 @@ The BTC price is split into traing and testing set. At the left the resturns of 
 multiple agents. At the right there is the testing on the prices the agents have not seen. The legend shows how many trades were done by each agent.
 
 At the top you see actual BTC prices.
-At the bottom there are multiple agents profitablity
+At the bottom there are multiple agents profitablity (return)
 
 ![Training and Testing](/images/best_trading_agents.png)
 
