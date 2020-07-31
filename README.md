@@ -1,7 +1,7 @@
 # rf-trading-bot
 Deep reinforcement learning crypto trading bot using Keras RL (reinforcement learning)
 
-# Input Features
+# Input Features for the environment
 Stock Bar Attributes
 ```python
 self.df['bar_hc'] = self.high - self.close
@@ -13,7 +13,7 @@ self.df['bar_co'] = self.close - self.open
 self.df['bar_mov'] = self.df['close'] - self.df['close'].shift(1
 ```
 
-# Trading Positions
+# Trading Positions (agent actions)
 There are three: Long, Short and Hold.
 ```python
 LONG = 0
@@ -54,7 +54,7 @@ At the bottom there are multiple agents profitablity
 ![Training and Testing](/images/best_trading_agents.png)
 
 # Most profitable 
-There are the agents that made the most of trades
+These are the agents that made the most of trades
 
 ![Training and Testing](/images/trading_agents.png)
 # Credits
