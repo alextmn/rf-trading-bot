@@ -10,7 +10,6 @@ from pathlib import Path
 
 # position constant
 LONG = 0
-SHORT = 1
 FLAT = 2
 
 # action constant
@@ -23,7 +22,7 @@ class OhlcvEnv(gym.Env):
     def __init__(self, window_size, path, show_trade=True):
         self.show_trade = show_trade
         self.path = path
-        self.actions = ["LONG", "SHORT", "FLAT"]
+        self.actions = ["BUY",  "SELL", "HOLD"]
         self.fee = 0.0005
         self.seed()
         self.file_list = []
@@ -62,9 +61,11 @@ class OhlcvEnv(gym.Env):
             'bar_hl',
             'bar_cl',
             'bar_ol',
-            'bar_co', 'close']
+            'bar_co', 'ret_std']
+        #feature_list = ['ret_std']
         self.df.dropna(inplace=True) # drops Nan rows
         self.closingPrices = self.df['close'].values
+        self.returnStd = self.df['ret_std'].values
         self.dates = self.df['date'].values
         self.df = self.df[feature_list].values
 
@@ -81,12 +82,14 @@ class OhlcvEnv(gym.Env):
             return self.state, self.reward, self.done, {}
         self.reward = 0
 
+        self.closingPrice = float(self.closingPrices[self.current_tick])
+        self.datetime= self.dates[self.current_tick]
+
         # action comes from the agent
         # 0 buy, 1 sell, 2 hold
         # single position can be opened per trade
         # valid action sequence would be
         # LONG : buy - hold - hold - sell
-        # SHORT : sell - hold - hold - buy
         # invalid action sequence is just considered hold
         # (e.g.) "buy - buy" would be considred "buy - hold"
         self.action = HOLD  # hold
@@ -95,22 +98,10 @@ class OhlcvEnv(gym.Env):
                 self.position = LONG # update position to long
                 self.action = BUY # record action as buy
                 self.entry_price = self.closingPrice # maintain entry price
-            elif self.position == SHORT: # if previous position was short
-                self.position = FLAT  # update position to flat
-                self.action = BUY # record action as buy
-                self.exit_price = self.closingPrice
-                self.reward += ((self.entry_price - self.exit_price)/self.exit_price + 1)*(1-self.fee)**2 - 1 # calculate reward
-                self.krw_balance = self.krw_balance * (1.0 + self.reward) # evaluate cumulative return in krw-won
-                self.n_short += 1 # record number of short
-                self.entry_price = 0 # clear entry price
-        elif action == 1: # vice versa for short trade
-            if self.position == FLAT:
-                self.position = SHORT
-                self.action = 1
-                self.entry_price = self.closingPrice
-            elif self.position == LONG:
+        elif action == SELL: # vice versa for short trade
+            if  self.position == LONG:
                 self.position = FLAT
-                self.action = 1
+                self.action = SELL
                 self.exit_price = self.closingPrice
                 self.reward += ((self.exit_price - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1
                 self.krw_balance = self.krw_balance * (1.0 + self.reward)
@@ -121,9 +112,6 @@ class OhlcvEnv(gym.Env):
         if(self.position == LONG):
             temp_reward = ((self.closingPrice - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1
             new_portfolio = self.krw_balance * (1.0 + temp_reward)
-        elif(self.position == SHORT):
-            temp_reward = ((self.entry_price - self.closingPrice)/self.closingPrice + 1)*(1-self.fee)**2 - 1
-            new_portfolio = self.krw_balance * (1.0 + temp_reward)
         else:
             temp_reward = 0
             new_portfolio = self.krw_balance
@@ -132,22 +120,17 @@ class OhlcvEnv(gym.Env):
         self.current_tick += 1
         if(self.show_trade and self.current_tick%100 == 0):
             print("Tick: {0}/ Portfolio (krw-won): {1}".format(self.current_tick, self.portfolio))
-            print("Long: {0}/ Short: {1}".format(self.n_long, self.n_short))
+            print("Long: {0}".format(self.n_long))
         self.updateState()
         self.history.append((self.action, self.datetime, self.closingPrice, self.portfolio, self.reward))
         if (self.current_tick > (self.df.shape[0]) - self.window_size-1):
             self.done = True
             self.reward = self.get_profit() # return reward at end of the game
         return self.state, self.reward, self.done, {}
-        # return self.state, self.reward, self.done, {'portfolio':np.array([self.portfolio]),
-        #                                             "history":self.history,
-        #                                             "n_trades":{'long':self.n_long, 'short':self.n_short}}
 
     def get_profit(self):
         if(self.position == LONG):
             profit = ((self.closingPrice - self.entry_price)/self.entry_price + 1)*(1-self.fee)**2 - 1
-        elif(self.position == SHORT):
-            profit = ((self.entry_price - self.closingPrice)/self.closingPrice + 1)*(1-self.fee)**2 - 1
         else:
             profit = 0
         return profit
@@ -159,7 +142,6 @@ class OhlcvEnv(gym.Env):
 
         # positions
         self.n_long = 0
-        self.n_short = 0
 
         # clear internal variables
         self.history = [] # keep buy, sell, hold action history
@@ -178,10 +160,8 @@ class OhlcvEnv(gym.Env):
     def updateState(self):
         def one_hot_encode(x, n_classes):
             return np.eye(n_classes)[x]
-        self.closingPrice = float(self.closingPrices[self.current_tick])
-        self.datetime= self.dates[self.current_tick]
         prev_position = self.position
-        one_hot_position = one_hot_encode(prev_position,3)
+        one_hot_position = one_hot_encode(prev_position,len(self.actions))
         profit = self.get_profit()
         # append two
         self.state = np.concatenate((self.df[self.current_tick], one_hot_position, [profit]))

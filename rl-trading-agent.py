@@ -2,7 +2,7 @@ import numpy as np
 
 # import keras
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, CuDNNLSTM, LSTM
+from keras.layers import Dense, Activation, Flatten, CuDNNLSTM, LSTM,Conv1D, MaxPooling1D
 from keras.optimizers import Adam
 
 # keras-rl agent
@@ -17,17 +17,19 @@ from normalizer import NormalizerProcessor
 
 def create_model(shape, nb_actions):
     model = Sequential()
-    model.add(LSTM(64, input_shape=shape, return_sequences=True))
-    model.add(LSTM(64))
-    model.add(Dense(32))
-    model.add(Activation('relu'))
-    model.add(Dense(nb_actions, activation='linear'))
+    model.add(Conv1D(filters=64, kernel_size=6, padding="same", activation="tanh",input_shape=shape))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Conv1D(filters=32, kernel_size=3, padding="same", activation="tanh"))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Flatten())
+    #model.add(Dense(nb_actions, activation='sigmoid'))
+    model.add(Dense(nb_actions, activation='softmax'))
     return model
 
 def main():
     # OPTIONS
     ENV_NAME = 'OHLCV-v0'
-    TIME_STEP = 30
+    TIME_STEP = 20
 
     # Get the environment and extract the number of actions.
     PATH_TRAIN = "./data/train/"
@@ -44,22 +46,24 @@ def main():
     print(model.summary())
 
     # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and even the metrics!
-    memory = SequentialMemory(limit=50000, window_length=TIME_STEP)
+    memory = SequentialMemory(limit=1000, window_length=TIME_STEP)
     # policy = BoltzmannQPolicy()
     policy = LinearAnnealedPolicy(EpsGreedyQPolicy(),
-             attr='eps', value_max=1., value_min=.2, value_test=.05, nb_steps=3000)
+            attr='eps', value_max=1., value_min=.2, value_test=.05, nb_steps=3000)
     #policy = EpsGreedyQPolicy()
     # enable the dueling network
     # you can specify the dueling_type to one of {'avg','max','naive'}
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=200,
                    enable_dueling_network=True, dueling_type='avg', target_model_update=1e-2, policy=policy,
                    processor=NormalizerProcessor())
-    dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+    dqn.compile(Adam(lr=1e-3), metrics=['crossentropy'])
 
     while True:
         # train
         dqn.load_weights('model/duel_dqn_weights-a-2.h5f')
-        #dqn.fit(env, nb_steps=500, nb_max_episode_steps=10000, visualize=False, verbose=2)
+        dqn.fit(env, nb_steps=17511 * 10, nb_max_episode_steps=17511,
+          visualize=False, verbose=2)
+        dqn.save_weights('model/duel_dqn_weights-a-2.h5f', overwrite=True)
         #try:
             # validate
         info = dqn.test(env_test, nb_episodes=1, visualize=False)
