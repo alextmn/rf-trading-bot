@@ -1,7 +1,8 @@
 # rf-trading-bot
-Deep reinforcement learning crypto trading bot
+Deep reinforcement learning crypto trading bot using Keras RL (reinforcement learning)
 
-# Stock Bar Attributes
+# Input Features for the environment
+Stock Bar Attributes
 ```python
 self.df['bar_hc'] = self.high - self.close
 self.df['bar_ho'] = self.high - self.open
@@ -12,7 +13,8 @@ self.df['bar_co'] = self.close - self.open
 self.df['bar_mov'] = self.df['close'] - self.df['close'].shift(1
 ```
 
-# Trading Posistions
+# Trading Positions (agent actions)
+There are three: Long, Short and Hold.
 ```python
 LONG = 0
 SHORT = 1
@@ -42,12 +44,19 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 ```
 
-# Results
-The BTC price is split into traing and testing set. At the left the results of trading across 
-multiple agents. At the right is the testing on the prices the agents have not seen
+# Returns 
+The BTC price is split into traing and testing set. At the left the resturns of trading across 
+multiple agents. At the right there is the testing on the prices the agents have not seen. The legend shows how many trades were done by each agent.
+
+At the top you see actual BTC prices.
+At the bottom there are multiple agents trading protfolios. Trading starts with 10,000 USD balance
+
+![Training and Testing](/images/best_trading_agents.png)
 
 # Most profitable 
+These are the agents that made the most of trades
 
+![Training and Testing](/images/trading_agents.png)
 # Credits
 Based on the work: https://github.com/miroblog/deep_rl_trader/
 
